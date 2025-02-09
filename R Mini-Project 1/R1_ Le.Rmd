@@ -1,0 +1,198 @@
+---
+title: "R Mini Project 1: R Script to Read & Summarize Fish Data"
+author: "Thinh Le"
+# Default output when creating a new R Notebook
+# https://bookdown.org/yihui/rmarkdown/notebook.html#using-notebooks
+output: html_notebook
+---
+
+# Background
+
+Each year, the New York Department of Environmental Conservation (DEC) releases approximately 900,000 pounds of fish into more than 1,200 public streams, rivers, lakes and ponds across the state. These fish are stocked for two main purposes - - to enhance recreational fishing and to restore native species to waters they formerly occupied.
+
+Raising these fish is a big task that requires precise methods and specialized equipment and facilities. The DEC runs 12 fish hatcheries, each specializing in raising one or more species of fish, including brook trout, brown trout, rainbow trout, lake trout, steelhead, chinook salmon, coho salmon, landlocked salmon, walleye, muskellunge and tiger muskellunge.
+
+# Instructions
+
+-   Download fish data from <https://www.kaggle.com/new-york-state/nys-fish-stocking-lists-actual-beginning-2011> (Also available on Blackboard.)
+-   Read the metadata to understand the data.
+-   Write an R script that:
+    -   Reads a dataset.
+    -   Describe the data at a minimum using the following: `glimpse()`, `summary()`, `dim()`, `nrow()`, `str()`, `head()`.
+    -   Contains inline comments on all lines of code
+
+# General note
+
+-   I used RStudio on Windows 11 to complete this mini project.
+
+# Solution
+
+## Get & set the working directory
+
+```{r}
+# Get the current working directory
+working_directory = getwd()
+```
+
+Note: must put the `fish.csv` file to the directory returned by `getwd()` in step 1.
+
+```{r}
+# Set the working directory
+setwd(working_directory)
+```
+
+## Read the `fish.csv` file
+
+```{r}
+# Read the fish data and assign it to fish_df
+fish_df <- read.csv("fish.csv")
+# Display the fish data frame
+fish_df
+```
+
+## Get a quick overview of the fish data using `glimpse()` function
+
+```{r}
+# Load dplyr package, must install it before loading.
+library(dplyr)
+
+# Note: This function is from the dplyr package
+glimpse(fish_df)
+```
+
+## Generate a **summary report** using `summary()` function
+
+```{r}
+# View the summary of the fish data
+summary(fish_df)
+```
+
+Notes:
+
+-   Numerical data types will show the minimum, 1st Qu., median, mean, and maximum.
+-   `NA's` means the number of missing or undefined values.
+
+## Get the dimension of the fish data using `dim()` function
+
+```{r}
+# dim is stand for dimension
+dim(fish_df)
+```
+
+From the result, we can see that the fish data has `23768` rows and `8` columns
+
+## Get first/last `n` elements using the `head()` and `tail()` functions:
+
+```{r}
+# Get the first 6 rows using the head() function
+head(fish_df)
+```
+
+Note: if the number of rows, `n`, is not provided, `6` is the default value.
+
+```{r}
+# Get the last 3 rows using the tail() function 
+tail(fish_df, n=3)
+```
+
+## Get the number of rows and columns using `nrow()` and `ncol()` functions
+
+Note: The number of columns and rows should be the same with the result from using the `dim()` function.
+
+```{r}
+nrow(fish_df) # Get the number of rows
+ncol(fish_df) # Get the number of columns
+```
+
+## Describe the data structure using the `str()` function
+
+Note: similar to the `glimpse()` function but less info compared to it.
+
+```{r}
+# str is stand for structure
+str(fish_df)
+```
+
+## Get all column names using the `colnames()` function
+
+```{r}
+# Get the column names
+colnames(fish_df)
+```
+
+## Remove NA values in fish size column
+
+Let's take a quick look at the `Size..Inches.` column:
+
+```{r}
+# Summarize a specific column (Size..Inches.)
+summary(fish_df$Size..Inches.)
+```
+
+There are 172 fish size records which have `NA's` values, I want to remove these rows and get a subset of new data without `NA's` values in fish size.
+
+To do this, I will use the `complete.cases()` function for the fish size column and use the `subset()` function to get a new subset data:
+
+```{r}
+# Get the fish size column
+fish_size <- fish_df$Size..Inches.
+
+# Use the complete.cases() function to check each fish size record
+# TRUE when the fish size has value and FALSE otherwise (NA or undefined/missing)
+is_none_na_fish_size <- complete.cases(fish_size)
+
+# Now get the subset of no missing fish size values using the subset() function
+# It takes the original data frame and conditions
+none_na_fish_size_df <- subset(fish_df, is_none_na_fish_size)
+
+# Call the summary() function again to check the fish size column of the new data.
+# 172 NA fish size rows should be cleaned.
+summary(none_na_fish_size_df$Size..Inches.)
+```
+
+```{r}
+# The expected rows should equal: total rows - the number of NA fish size rows = 23768 - 172 = 23596
+# Let's check that by using the nrow() function
+nrow(none_na_fish_size_df)
+```
+
+## Add a new column to store the fish size in cm
+
+Notes:
+
+-   1 in = 2.54 cm
+-   We will continue to use the `none_na_fish_size_df` in the previous section.
+
+```{r}
+# Add new column
+none_na_fish_size_df$SizeInCm <- none_na_fish_size_df$Size..Inches * 2.54
+
+# View first 6 rows of the new added column
+head(none_na_fish_size_df$SizeInCm)
+```
+
+## Find the "big" fishes
+
+Let's check the biggest size in cm among the fishes:
+
+```{r}
+# Get the maximum value in the fish size column in cm
+max(none_na_fish_size_df$SizeInCm)
+```
+
+Interesting! I want to explore the fishes having the size over 100cm 🤔. This time, I will try to use the `filter()` function from `dplyr` package instead of using the `subset()` function, note that the `dplyr` package has been loaded earlier.
+
+```{r}
+# Get the fishes having their size over 100cm
+fishes_over_100_cm_df <- none_na_fish_size_df %>%
+  filter(none_na_fish_size_df$SizeInCm > 100)
+
+# Display the fishes
+fishes_over_100_cm_df
+```
+
+Observation: About 50 "big" fish were released into Cattaraugus in October 2013. They are all of the same **Rainbow Trout** species and come from the Quaker Lake waterbody. Cool! 😮
+
+I tried to search for the fish image on Google, and this is the result: ![Rainbow Trout species](https://www.anglersjournal.com/.image/t_share/MTQ4MTY5NTQ1Mzk4MzYzMzQx/1-rainbow-trout-aj_sj.jpg)
+
+Image source: <https://www.anglersjournal.com/freshwater/rainbow-trout>

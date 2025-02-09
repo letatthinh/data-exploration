@@ -1,0 +1,330 @@
+---
+title: "R Mini Project 2: R Script Covering Data Frames, Vectors, and Strings"
+author: "Thinh Le"
+date: "2024-10-03"
+output: html_notebook
+---
+
+# Background
+
+Undergraduate students enrolled in Biodiversity and Evolution (BIOL1400) at Stockton University during the Fall 2021 & 2023 and Spring 2021 semesters were tasked with the assignment to document 20-30 different species of life using citizen science platform, iNaturalist. iNaturalist is an online social network that helps you identify the plants and animals around you while generating data for science and conservation. You can use it to record your own observations, get help with identifications, or collaborate with others.
+
+The taxonomic system for species classification is composed of Kingdom, Phylum, Class, Order, Family, Genus, species. For example, humans are classified as Animalia, Chordata, Mammalia, Primates, Hominidae, Homo, sapiens.
+
+Link to the project summary on iNaturalist. For this dataset, only Research grade observations have been selected. Research grade means the species identification has been verified by one or more other users on iNaturalist. Research grade also ensures that all observations of taxa are wild. No Casual grade observations from zoos, aquariums, or manmade gardens are included.
+
+# Instructions
+
+Write an R script with inline comments that successfully:
+
+-   Write your name, date, and assignment at the top
+-   Loads all necessary libraries
+-   Reads in the data
+-   Describes the data using:
+    -   At a minimum - head(), glimpse(), summary(), and str()
+    -   Other unique ways to explore and describe the data are encouraged.
+-   Explores and cleans the data:
+    -   Check NAs or blanks in place_town_name column. How many rows are blank?
+    -   Delete the place_town_name column of the data.
+-   Rename the columns taxon_kingdom_name, taxon_phylum_name, taxon_class_name, taxon_order_name, taxon_family_name, taxon_genus_name, and taxon_species_name to kingdom, phylum, class, order, family, genus, and species.
+-   Create a new column named “time” or revise the time_observed_at column to only include the observation time in the format %H:%M:%S. Complete this with R and not Microsoft Excel.
+-   Use lubridate to change the data type for observation_date to read as date and the data type for time/time_observed_at column as time.
+-   Create a factor from the kingdom column.
+-   Use library(stringr) to count the number of occurrences of one of the kingdoms from the kingdom column
+-   Determine what months the data was collected.
+-   Create a quick plot() of the kingdoms observed
+-   Create a quick plot() of your choice
+-   Save the new cleaned data frame as a new .csv file named “iNaturalist_ResearchGrade_YourLastName.csv”
+
+# General note
+
+-   I used RStudio on Windows 11 to complete this mini project.
+
+# Solution
+
+## Get & set the working directory
+
+```{r}
+# Get & set the working directory
+setwd(getwd())
+```
+
+## Load necessary libraries
+
+```{r}
+# Load the libraries
+library(dplyr)
+library(lubridate) # Working with date and time
+library(stringr) # Working with string
+library(ggplot2)
+```
+
+## Read the data
+
+```{r}
+# Read the "iNaturalist_ResearchGrade.csv" files and assign it to iNaturalist_df variable
+iNaturalist_df <- read.csv("iNaturalist_ResearchGrade.csv")
+```
+
+## Describes the data
+
+### View a glimpse of data
+
+```{r}
+# Use glimpse to view the structure of the data
+glimpse(iNaturalist_df)
+```
+
+### View data summary
+
+```{r}
+# View data summary
+summary(iNaturalist_df)
+```
+
+### View structure
+
+```{r}
+# View the structure of data
+str(iNaturalist_df)
+```
+
+### View data dimension
+
+```{r}
+# View data dimension
+dim(iNaturalist_df)
+```
+
+There are 2319 rows and 25 columns.
+
+### View all the column names
+
+```{r}
+# View the column names
+colnames(iNaturalist_df)
+```
+
+### View the top 5 rows
+
+```{r}
+# View the top 5 rows
+head(iNaturalist_df, n = 5)
+```
+
+### View the last 5 rows
+
+```{r}
+# View the last 5 rows
+tail(iNaturalist_df, n = 5)
+```
+
+## Explores and cleans the data
+
+### Check NA or blank rows in `place_town_name` column. How many rows are blank?
+
+```{r}
+#Get a data frame containing NA or blank rows in place_town_name column
+na_place_town_name <- iNaturalist_df[
+  is.na(iNaturalist_df$place_town_name) | iNaturalist_df$place_town_name == "", 
+]
+
+# Count the number of rows
+nrow(na_place_town_name)
+```
+
+There are **2291**/2319 NA or blank rows in the place_town_name column.
+
+### Delete the `place_town_name` column from the data frame
+
+```{r}
+# Delete the place_town_name column from iNaturalist_df
+iNaturalist_df$place_town_name <- NULL
+```
+
+## Rename the columns
+
+```{r}
+# Rename the columns taxon_kingdom_name, taxon_phylum_name, taxon_class_name, taxon_order_name, taxon_family_name, taxon_genus_name, and taxon_species_name to kingdom, phylum, class, order, family, genus, and species.
+iNaturalist_df <- iNaturalist_df %>% 
+  rename(
+    "kingdom" = taxon_kingdom_name,
+    "phylum" = taxon_phylum_name,
+    "class" = taxon_class_name,
+    "order" = taxon_order_name,
+    "family" = taxon_family_name,
+    "genus" = taxon_genus_name,
+    "species" = taxon_species_name,
+  )
+```
+
+## Revise the `time_observed_at` column to only include the observation time in the format `%H:%M:%S`
+
+```{r}
+# Convert the time_observed_at column to datetime then use format() to extract the hours, minutes, seconds.
+iNaturalist_df$time_observed_at <- format(as_datetime(iNaturalist_df$time_observed_at), "%H:%M:%S")
+
+# Check the data type
+class(iNaturalist_df$time_observed_at)
+```
+
+## Use `lubridate` library to change data type of `observed_on` and `time_observed_at` columns to date and time
+
+### Change data type of the `observed_on` column to date
+
+First, I will convert the data type of the observed_on from `character` to `date` and create a new column `date` to store the result.
+
+```{r}
+# Convert the observed_on column to date type and store in date column.
+# I use mdy() since the format of the date is month/day/year
+iNaturalist_df$date <- mdy(iNaturalist_df$observed_on)
+
+# Check the data type
+class(iNaturalist_df$date)
+```
+
+### Change data type of the `time_observed_at` column to date
+
+Next, I will convert the data type of the `time_observed_at` column from `character` to `hms` and create a new column `time` to store the result.
+
+```{r}
+# Convert time_observed_at column to time in hms type.
+iNaturalist_df$time <- hms::as_hms(iNaturalist_df$time_observed_at)
+
+# Check the data type
+class(iNaturalist_df$time)
+```
+
+## Create a factor from the kingdom column
+
+```{r}
+# Create a factor kingdom
+kingdom <- factor(iNaturalist_df$kingdom)
+
+# View a list of kingdoms
+levels(kingdom)
+```
+
+## Use `stringr` library to count the number of occurrences of one of the kingdoms from the kingdom column
+
+"Fungi" sound interesting to me, so I will count how many "Fungi" kingdom records in the data:
+
+```{r}
+# Count the occurrences of the string "Fungi" in the data
+fungi_kingdom_count <- str_count(iNaturalist_df$kingdom, "Fungi")
+
+# Sum the results
+sum(fungi_kingdom_count)
+```
+
+There are **138** records of Fungi kingdom in the data.
+
+## Determine what months the data was collected
+
+Get the months from the dates and store it in a new column called `month`:
+
+```{r}
+# Get months from dates in the date column
+iNaturalist_df$month <- lubridate::month(iNaturalist_df$date)
+```
+
+## Create a quick plot() of the kingdoms observed
+
+Before jumping into making a graph, I will clean the rows having `NA` values:
+
+```{r}
+# Remove rows having NA
+na.omit(iNaturalist_df)
+```
+
+Count the occurrence of each kingdom:
+
+```{r}
+# Count the occurrence of each kingdom
+kingdoms_count <- table(iNaturalist_df$kingdom)
+kingdoms_count
+```
+
+Create a graph:
+
+```{r}
+# Create a barplot
+kingdom_bp <- barplot(
+  kingdoms_count,
+  main = "The Number of Occurrences by Kingdom", # Title of the chart
+  ylim = c(0, 1900), # The scale of the y a-xis
+  yaxt = "n",
+  col = "lightblue" # Column color
+)
+
+# Show the number of occurrences on the top of each column, with text is black.
+text(x = kingdom_bp, y = kingdoms_count, label = kingdoms_count, pos = 3, col = "black")
+```
+
+We can see that Animalia is the most frequent, with **1623** occurrences.
+
+## Create a quick plot() of your choice
+
+I selected Fungi earlier, and I live in Atlantic City. Let's get a subset of the Fungi kingdom in Atlantic City and then collect a few pictures of the top 5 commonly photographed species.
+
+```{r}
+# Get fungi kingdom in Atlantic
+fungi_kingdom_in_atlantic_df <- iNaturalist_df[
+  iNaturalist_df$kingdom == "Fungi" & iNaturalist_df$place_county_name == "Atlantic", 
+]
+
+# Get top 5 species
+top_5fungi_kingdom_in_atlantic <- fungi_kingdom_in_atlantic_df %>%
+  group_by(species) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count)) %>%
+  slice(1:5)
+
+# Count the number of occurrences of each species
+species_count <- table(fungi_kingdom_in_atlantic_df$species)
+
+# Create a bar chart with default settings
+ggplot(
+  top_5fungi_kingdom_in_atlantic,
+  aes(x = species, y = count)
+) + 
+  geom_bar(stat = "identity") + # Apply no statistic +
+  labs(
+    title = "Top 5 Species in Atlantic"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+  )
+```
+
+So, it seems like "Flavoparmelia caperata" is the winner.
+
+Let's collect some pictures of this species from the data.
+
+```{r}
+pictures <- fungi_kingdom_in_atlantic_df[
+  fungi_kingdom_in_atlantic_df$species == "Flavoparmelia caperata",
+]$image_url
+
+head(pictures, n = 3)
+```
+
+Copy and paste the image url:
+
+![Flavoparmelia caperata 1](https://inaturalist-open-data.s3.amazonaws.com/photos/114855548/medium.jpg)
+
+![Flavoparmelia caperata 2](https://inaturalist-open-data.s3.amazonaws.com/photos/120802850/medium.jpg)
+
+![Flavoparmelia caperata 3](https://inaturalist-open-data.s3.amazonaws.com/photos/158153406/medium.jpg)
+
+Very... interesting! 😝
+
+## Save the new cleaned data frame as a new .csv file named “iNaturalist_ResearchGrade_YourLastName.csv”
+
+Write to a new csv file with my last name Le:
+
+```{r}
+# Create a new file in the current working directory
+write.csv(iNaturalist_df, paste0(getwd(), "/iNaturalist_ResearchGrade_Le.csv"))
+```

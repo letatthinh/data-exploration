@@ -1,0 +1,241 @@
+---
+title: "Data Types"
+
+date: "September 19, 2024"
+output: html_notebook
+---
+
+# Data Exploration 5101
+## Dr. Clifton Baldwin and Prof. Melissa Laurino
+
+For food safety reasons, I was asked the question of what temperature is the interior of my refrigerator and does it exceed safety limits during warm weather? I want to make sure my fridge stays below 39&deg;F (or 4&deg;C - recommendations are 5&deg;C but I allow for measurement error)
+
+During the summer of 2020, I wired and coded a Raspberry Pi Zero W with two sensors. I mean, the pandemic had many things closed down, and what else was there to do? One sensor detected temperature and relative humidity and the other just temperature (in degrees Celsius). I put the temperature-only sensor in my refrigerator and the dual-sensor outside of my refrigerator. After a week of readings, I downloaded the data file named temperatures.csv from my Raspberry Pi.
+
+# Week 3
+
+In addition to the books we recommend (see the syllabus), you can look at https://www.analyticsvidhya.com/blog/2016/02/complete-tutorial-learn-data-science-scratch/ for more help
+
+Include the libraries we want to use
+
+```{r}
+# If The Tidyverse is not already installed (only have to do this once), 
+# install.packages('tidyverse', dependencies = TRUE)
+# Activate the Tidyverse libraries
+library(tidyverse) # includes tibble, readr, dplyr, and several others
+
+# OR
+# Alternatively I can load the individual packages
+library(tibble)
+library(readr)
+library(dplyr)
+
+```
+
+
+Read in the data, as we did in week 2
+
+```{r}
+# Comment to describe what the code does
+# Read the dataset using the readr function read_csv
+fridge <- read_csv('temperatures.csv', col_names = TRUE)
+```
+
+Now there is a variable, actually a data frame, called fridge that has the contents of temperatures.csv in memory.
+
+
+```{r}
+
+```
+
+
+
+## Vectors 
+
+Some datasets have hundreds of variables or more. Maybe we want to see just a subset of these variables, say counter, external_temp, and internal_temp. We can specify just those three by name, but we need to enter those names as a <b>vector</b>.
+
+A vector is specified using c() in R. For example, I could define a vector I will call "primes" to the first five prime numbers.
+
+```{r}
+primes <- c(2,3,5,7,11)
+
+primes
+```
+
+Or we could save the names of the four DSSA professors as a vector
+
+```{r}
+professors <- c("Baldwin", "Laurino", "Dunn", "Olsen")
+
+professors
+```
+
+
+
+Back to our refrigerator situation, we will pass the variable names as a vector
+
+```{r}
+head(fridge[c("counter", "external_temp", "internal_temp")])
+```
+
+That may be more typing than we want to do. If we know the column positions of the variables, we can pass a vector of numbers representing the positions. How do we know the positions? We can look at the column names using names()
+
+```{r}
+names(fridge)
+```
+
+Unlike Python, the first element in R is number 1 (Python starts at number 0). So counter is position 1, external_temp is 3, and internal_temp is 5
+
+```{r}
+head(fridge[c(1,3,5)])
+```
+
+We could save the vector and use it also.
+
+```{r}
+vars <- c("counter", "external_temp", "internal_temp")
+
+head(fridge[vars])
+```
+
+If we want to see certain rows only, say rows 2, 151, 263, we can specify that also. We specify the data.frame (or Tibble) and using square brackets we can specify the rows and columns. Leave one blank for all.
+
+```{r}
+fridge[c(2,151,263),]
+```
+
+As you can see, we got three rows and all variables. If we want just the three we were using, specify both rows and columns
+
+```{r}
+fridge[c(2,151,263),c(1,3,5)]
+```
+
+Or again, we can use our saved vector to define the requested variable names
+
+```{r}
+fridge[c(2,151,263),vars]
+```
+
+## Lists 
+
+The thing about vectors is that every element must be the same type (e.g., numeric, string, logical). For example they are all numeric, like primes above, or all character, like vars above. I prefer vectors for their ease of use, but R has other constructs that can be handy. <b>Lists</b> are R objects that contain elements of different types, like numbers, strings, vectors and another list inside it one list. And yes, lists can contain lists - a list of lists. 
+
+```{r}
+list1 <- list("Red", "Green", c(21,32,11), TRUE, 51L, 9.23, "September 19, 2024")
+
+print(list1)
+```
+
+To access the elements easier, the list elements can be given names, and then the names can be called to access the appropriate elements of the list.
+
+```{r}
+names(list1) <- c("Stop", "Go", "vecor", "Boolean", "Integer", "Some Number", "Week3")
+
+print(list1)
+```
+
+Now when we want to see the date of the Week 3 class, we can call it in this list.
+
+```{r}
+list1$Week3
+```
+
+There is much more you can do with lists (and some of it can get confusing - at least it can confuse me).
+
+## Matrices
+
+When we get into machine learning, we will use Python in this program, but R can handle machine learning also. In many machine learning cases, one wants a <b>matrix</b>. Although a data frame may resemble a matrix at times, a data frame is much more than a matrix. We can create a matrix though.
+
+```{r}
+matrix(c(-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23),
+       nrow = 4)
+```
+
+Wait, we wanted it to go by rows.
+
+```{r}
+matrix(c(-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23),
+       nrow = 4, byrow = TRUE)
+```
+
+We can do all sorts of matrix algebra (using R) with this matrix. But matrices can be character also - not as useful for math but might be a good storage option on occasion.
+
+```{r}
+thismatrix <- matrix(c("apple", "banana", "cherry", "orange","grape", "pineapple", "pear", "melon", "fig"), nrow = 3, ncol = 3)
+
+thismatrix
+```
+
+We can access elements of the matrix. Just indicate the row and column numbers. For example, to get the element in the 2nd row, 3rd column
+
+```{r}
+thismatrix[2,3] 
+```
+
+Or we can access multiple elements. For example, the 2nd and 3rd row, 3rd column.
+
+```{r}
+thismatrix[c(2,3),3] 
+```
+
+Or entire rows, by leaving the row indicator blank. Here we ask for the 1st and 2nd row (all columns)
+
+```{r}
+thismatrix[c(1,2),] 
+```
+
+Or columns. For example, the entire 2nd column.
+
+```{r}
+thismatrix[,2] 
+```
+
+
+We could make a matrix of the fridge data, with internal_temp as the 1st column, external_temp as the 2nd column, and external_humidity as the 3rd column.
+
+```{r}
+fridge_matrix <- as.matrix(fridge[c("internal_temp", "external_temp",
+                                    "external_humidity")])
+
+fridge_matrix[c(1:10),]
+```
+
+We could have declared a vector, such as c("internal_temp", "external_temp", "external_humidity"), and used the vector name instead, but in this case we did not bother.
+
+We printed only the first ten rows of the matrix by asking for rows 1 to 10, using a colon (e.g. 1:10) and all columns by leaving it blank.
+
+One last function we like to use to understand the data in a data frame (or Tibble) is summary(). (Yes, we showed it last week, but it is worth repeating). It is a base R function that gives some very basic statistics. 
+
+```{r}
+summary(fridge)
+```
+
+As you can see, summary() provides the minimum, median, maximum, and quartile numbers where appropriate. When the variable is character, it shows the number of observations (length). What we like in addition to the statistics of the numeric variables is that it states how many observations are missing (i.e. NA). We can see there are three NAs (3 missing observations) for external_temp but nothing missing from internal_temp. Just guessing that indicates the external sensor had a few glitches but the internal sensor was more reliable.
+
+At this point, we have created many variables and data frames. We can clean up the ones that I no longer need with the function rm(), for "remove"
+
+```{r}
+rm(fridge_matrix, list1, thismatrix, primes, professors, vars)
+```
+
+And now the only data frame left in memory is fridge, which we wanted saved so we can use it more. Note, it is only saved as long as we keep R running. If we close down R, we will have to read the CSV file again. If we manipulated the data and wanted to save our edited data, we can save it as a new file, but we are not going to get into that yet (feel free to look up save()/load() and saveRDS()/readRDS())
+
+At this point, we have a good idea of what data is available in this CSV file. Whenever we start a data exploration of a new dataset, we try to get a basic understanding of the data using these functions. Some times the data are not in a CSV file, and we need to read it using another method. Once in R, we like to run glimpse() and summary() to see how the data frame looks.
+
+Hmm, I guess we did not need the library dplyr here. We use dplyr so much that I am surprised, but it did not hurt to load it in case we needed it.
+
+# Homework for Week 3 (from the Syllabus)
+
+Readings to Compliment This Week’s Topics
+
+    i. R Programming for Data Science, chapter 5
+    ii. Understanding Data https://www.r-bloggers.com/understanding-data/amp/ 
+    iii. Working With Vectors https://www.r-bloggers.com/working-with-vectors/ 
+    iv. Vectors and Functions https://www.r-bloggers.com/vectors-and-functions/ 
+    v. Tibbles https://www.r-bloggers.com/a-tour-of-the-tibble-package/ 
+    vi. “Examine a Data Frame in R with 7 Basic Functions” https://rveryday.wordpress.com/2016/11/29/examine-a-data-frame-in-r-with-7-basic-functions/ 
+    vii. Creating vectors https://www.r-exercises.com/2019/07/29/creating-vectors/ 
+
+<u>Reminder</u> - <b>R Mini Project 1</b>: R code to read a dataset and describe the data (e.g. glimpse(), summary(), dim(), nrow(), str(), head()) - Due Week 4 (15%)
+  Using fish data from https://www.kaggle.com/new-york-state/nys-fish-stocking-lists-actual-beginning-2011 
+
